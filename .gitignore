@@ -1,0 +1,21 @@
+# Artefatti di compilazione
+build/
+
+# Output di esecuzione
+logs/*.csv
+MUJOCO_LOG.TXT
+
+# Dipendenze non versionate: si recuperano come spiegato nel README
+mujoco-3.10.0/
+mujoco_menagerie/
+tools/
+models/go1/assets/*.stl
+
+# Esperimenti locali
+experiments/
+
+# File dell'ambiente desktop
+.directory
+
+# Appunti locali, i comandi sono nel README
+comandi.txt
