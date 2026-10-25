@@ -3,7 +3,7 @@
 
 #include "rt_time.h"
 
-/* Periodi multipli del passo di integrazione MuJoCo (2 ms). Iperperiodo dei task RT: 20 ms. */
+/*Periodi dei thread */
 #define CFG_SIM_PERIOD_NS       (2   * RT_NS_PER_MS)   /* 500 Hz, pari al timestep del modello */
 #define CFG_ESTIMATOR_PERIOD_NS (4   * RT_NS_PER_MS)   /* 250 Hz */
 #define CFG_GAIT_PERIOD_NS      (10  * RT_NS_PER_MS)   /* 100 Hz */
@@ -40,7 +40,7 @@ enum { LEG_FR = 0, LEG_FL = 1, LEG_RR = 2, LEG_RL = 3 };
 enum { JNT_ABAD = 0, JNT_HIP = 1, JNT_KNEE = 2 };
 
 /* kd a zero: il modello ha il suo smorzamento di giunto. kp alto per limitare il cedimento. */
-#define CFG_KP_DEFAULT      300.0   /* N*m/rad; a kp=100 il beccheggio sbanda di -13.7 mrad */
+#define CFG_KP_DEFAULT      300.0   
 #define CFG_KD_DEFAULT        0.0
 
 /* Trotto. duty sopra 0.5 lascia un intervallo con quattro piedi a terra. */
@@ -63,7 +63,7 @@ enum { JNT_ABAD = 0, JNT_HIP = 1, JNT_KNEE = 2 };
 #define CFG_ATT_GATE        2.0     /* m/s^2 di scarto da g oltre cui ignorare */
 
 /* Correzione d'assetto: allunga le gambe dal lato basso, le raccoglie dal lato alto. */
-#define CFG_ATT_KP_LEVEL    0.5     /* m di corsa del piede per rad; sopra 1.0 l'anello va instabile */
+#define CFG_ATT_KP_LEVEL    0.5     
 
 /* Passi per evento tasto accettato: uno per ciclo, cosi' tenere premuto rampa a velocita' nota. */
 #define CFG_VX_MAX   0.60

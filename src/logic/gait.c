@@ -78,7 +78,7 @@ void gait_feet_targets(const gait_params_t *gp,
     for (int leg = 0; leg < CFG_NUM_LEGS; leg++) {
         double hip[3], ref[3];
 
-        leg_hip_pos(leg, hip);
+        leg_abad_pos(leg, hip);
         leg_nominal_foot(leg, gp->height, ref);
 
         /* L'imbardata fa viaggiare ogni gamba a velocità diversa: il lato
@@ -97,7 +97,7 @@ void gait_feet_targets(const gait_params_t *gp,
         /* Termine di livellamento */
         double dz = 0.0;
         if (att) {
-            dz = -(att->kp * att->roll)  * hip[1] -(att->kp * att->pitch) * hip[0];
+            dz = -(att->kp * att->roll)  * hip[1] - (att->kp * att->pitch) * hip[0];
             dz *= amplitude;
         }
 

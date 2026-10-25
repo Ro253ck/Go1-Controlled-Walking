@@ -4,7 +4,6 @@
 #include <math.h>
 
 
-
 /* Prodotto di Hamilton: compone due rotazioni. Otteniamo un'altro quaternione. */
 void quaternion_mul(double r[4], const double a[4], const double b[4])
 {
@@ -70,9 +69,9 @@ void quaternion_to_rpy(const double q[4], double *roll, double *pitch, double *y
     if (sin_pitch < -1.0) sin_pitch = -1.0;
 
     /*Formule ricavate dalle matrici di rotazione*/
-    if (roll)  *roll  = atan2(2.0*(w*x + y*z), 1.0 - 2.0*(x*x + y*y));
-    if (pitch) *pitch = asin(sin_pitch);
-    if (yaw)   *yaw   = atan2(2.0*(w*z + x*y), 1.0 - 2.0*(y*y + z*z));
+    if(roll) *roll  = atan2(2.0*(w*x + y*z), 1.0 - 2.0*(x*x + y*y));
+    if(pitch) *pitch = asin(sin_pitch);
+    if(yaw) *yaw   = atan2(2.0*(w*z + x*y), 1.0 - 2.0*(y*y + z*z));
 }
 
 void filter_init(filter_t *f, double kp, double gate)
@@ -84,7 +83,6 @@ void filter_init(filter_t *f, double kp, double gate)
     f->n_gated   = 0;
     f->n_updates = 0;
 }
-
 
 void filter_seed(filter_t *f, const double accelerometer[3])
 {

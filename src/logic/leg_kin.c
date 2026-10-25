@@ -18,7 +18,7 @@ double leg_offset_d(int leg)
 
 /*Ritorna la posizione del giunto di abduzione, in base a quale gamba consideriamo.
   Le anteriori e le sinistre sono positive, le posteriori e le destre negative*/
-void leg_hip_pos(int leg, double out[3])
+void leg_abad_pos(int leg, double out[3])
 {
     out[0] = leg_is_front(leg) ? LEG_HIP_X : -LEG_HIP_X;
     out[1] = leg_is_left(leg)  ? LEG_HIP_Y : -LEG_HIP_Y;
@@ -78,7 +78,7 @@ void leg_ik(int leg, const double p[3], double q[CFG_JOINTS_PER_LEG])
     if (cos_q3 >  1.0) cos_q3 =  1.0;
     if (cos_q3 < -1.0) cos_q3 = -1.0;
 
-    q[JNT_KNEE] = -acos(cos_q3);   /* ramo negativo: il ginocchio piega all'indietro */
+    q[JNT_KNEE] = -acos(cos_q3);   /* ramo negativo: il ginocchio piega all'indietro, idendico a fare acos(180 - cos_q3) */
 
     /* Passo 3: usiamo di nuovo il teorema del coseno, questa volta per
        ricavare l'angolo dell'anca */
@@ -106,24 +106,24 @@ void legs_ik_trunk(const feet_target_t *feet, double q[CFG_NUM_JOINTS])
 {
 
     for (int leg = 0; leg < CFG_NUM_LEGS; leg++) {
-        double hip[3], p_hip[3];
+        double abad[3], p_abad[3];
 
-        leg_hip_pos(leg, hip);
+        leg_abad_pos(leg, abad);
         for (int i = 0; i < 3; i++)
-            p_hip[i] = feet->p[leg][i] - hip[i];
+            p_abad[i] = feet->p[leg][i] - abad[i];
 
-        leg_ik(leg, p_hip, &q[leg * CFG_JOINTS_PER_LEG]);
+        leg_ik(leg, p_abad, &q[leg * CFG_JOINTS_PER_LEG]);
     }
 }
 
 void leg_nominal_foot(int leg, double height, double p_trunk[3])
 {
-    double hip[3];
-    leg_hip_pos(leg, hip);
+    double abad[3];
+    leg_abad_pos(leg, abad);
 
-    /* Esattamente sotto l'anca, scostato lateralmente di d: è la posa che
-       dà un angolo di abduzione esattamente nullo. */
-    p_trunk[0] = hip[0];
-    p_trunk[1] = hip[1] + leg_offset_d(leg);
+    /* Esattamente sotto il giunto di abduzione, scostato lateralmente di d:
+       è la posa che dà un angolo di abduzione esattamente nullo. */
+    p_trunk[0] = abad[0];
+    p_trunk[1] = abad[1] + leg_offset_d(leg);
     p_trunk[2] = -height;
 }

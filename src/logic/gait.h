@@ -13,7 +13,7 @@ typedef struct {
     double duty;        /* beta, frazione del ciclo trascorsa in appoggio */
     double height;      /* h0, altezza nominale del tronco */
     double clearance;   /* H, apice del volo */
-    double raibert_k;   /* guadagno della retroazione sul punto d'appoggio */
+    double raibert_k;
 } gait_params_t;
 
 /* Retroazione d'assetto applicata attraverso i piedi: nessun controllo di

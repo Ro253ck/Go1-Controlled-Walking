@@ -29,10 +29,11 @@ typedef struct {
 /* Scostamento laterale con segno: l'unica cosa che distingue destra da sinistra. */
 double leg_offset_d(int leg);
 
-/* Origine dell'anca nel sistema del tronco. */
-void leg_hip_pos(int leg, double out[3]);
+/* Origine del giunto di abduzione nel sistema del tronco: e' il punto in cui
+   la gamba si attacca al tronco, e l'origine usata da leg_ik. */
+void leg_abad_pos(int leg, double out[3]);
 
-/* Angoli dei giunti -> posizione del piede nel sistema dell'anca. Serve solo
+/* Angoli dei giunti -> posizione del piede nel sistema dell'abduzione. Serve solo
 *  a verificare il corretto funzionamento della funzione inversa. */
 //void leg_fk(int leg, const double q[CFG_JOINTS_PER_LEG], double p[3]);
 
