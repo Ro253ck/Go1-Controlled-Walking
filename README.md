@@ -19,9 +19,6 @@ singolo scrittore protette da mutex con ereditarietà di priorità.
 | `command`   | 20 ms   |    40    | tastiera non bloccante                     |
 | `logger`    | 20 ms   |    20    | scrittura del CSV                          |
 
-Iperperiodo 20 ms. Il rendering gira nel thread principale a ~60 Hz, scandito
-dal vsync, e non partecipa all'insieme real-time.
-
 ## Flusso dei dati
 
 ```
