@@ -38,9 +38,8 @@ void *th_estimator_run(void *arg)
             c->n_seed_tries++;
 
             if (!c->filter.seeded && c->n_seed_tries > CFG_ATT_SEED_TRIES) {
-                /* Non fidarsi mai di un'attesa illimitata dentro un task
-                   periodico: si accetta l'ipotesi di partenza orizzontale e
-                   si lascia che sia la correzione a fare il resto. */
+                /* In caso dopo un tot di tentavi non risuciamo a inizalizzarlo in maniera corretta
+                * accettiamo l'ipotesi di essere in piano */
                 c->filter.seeded = 1;
             }
             rt_periodic_done(&c->per);
@@ -54,7 +53,7 @@ void *th_estimator_run(void *arg)
             const double dt = imu.sim_time - last_time;
             last_time = imu.sim_time;
 
-            if (dt > 0.0 && dt < 0.5)
+            if (dt > 0.0 /*&& dt < 0.5*/)
                 filter_update(&c->filter, imu.gyro, imu.acc, dt);
         }
 

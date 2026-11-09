@@ -16,16 +16,10 @@ void *th_sim_run(void *arg)
     while (atomic_load(c->running)) {
         rt_periodic_wait(&c->per);
 
-        /* Il gait gira cinque volte piu' lentamente, quindi la maggior parte
-           dei cicli riusa lo stesso riferimento. Ed e' corretto cosi': vince
-           l'ultimo, e il termine di velocita' che viaggia accanto alla
-           posizione evita che il PD insegua una scala a gradini. */
+        /* Leggiamo struttura dati destination */
         bb_des_read(c->bb_des, &des);
 
-        /* La decisione di supervisione e' presa da un thread a bassa
-           priorita', ma viene eseguita qui, in quello a priorita' massima:
-           per la sicurezza conta quanto in fretta cambia la coppia, non
-           quanto in fretta e' stata presa la decisione. */
+        /* Leggiamo struttura dati safety */
         bb_safe_read(c->bb_safe, &safe);
 
         bb_cmd_read(c->bb_cmd, &cmd);
@@ -45,9 +39,7 @@ void *th_sim_run(void *arg)
         sim_snapshot(c->sim, &st);
         sim_imu_snapshot(c->sim, &imu);
 
-        /* L'unica scrittura condivisa del ciclo, ed e' una semplice copia:
-           l'istantanea e' stata composta sopra, fuori da ogni sezione
-           critica. */
+        /* Aggiorniamo blackboard*/
         bb_state_write(c->bb_state, &st);
         bb_imu_write(c->bb_imu, &imu);
 

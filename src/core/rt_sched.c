@@ -98,10 +98,7 @@ void rt_mutex_init_pi(pthread_mutex_t *m)
 
     pthread_mutexattr_init(&ma);
     if (pthread_mutexattr_setprotocol(&ma, PTHREAD_PRIO_INHERIT) != 0) {
-        /* Siamo in fase di inizializzazione, quindi fermarsi segnalando e' la
-           cosa giusta: senza ereditarieta' il termine di blocco e' illimitato
-           e l'analisi di schedulabilita' dell'intero sistema smette di
-           significare qualcosa. */
+        /*In caso di errore usciamo, non ha senso proseguire visto che questa è un'assunzione fondamentale*/
         fprintf(stderr, "FATAL: PTHREAD_PRIO_INHERIT unavailable\n");
         exit(EXIT_FAILURE);
     }

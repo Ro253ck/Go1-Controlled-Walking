@@ -69,8 +69,7 @@ void leg_ik(int leg, const double p[3], double q[CFG_JOINTS_PER_LEG])
     q[JNT_ABAD] = wrap_pi(atan2(p[2], p[1]) - atan2(c, d));
 
     /* Passo 2 (piano x-z): il ginocchio, per il teorema del coseno sul triangolo
-       anca-ginocchio-piede. Il segno davanti a 2*L1*L2 è positivo perché q3
-       misura lo scostamento dalla gamba distesa, non l'angolo interno. */
+       anca-ginocchio-piede.*/
     const double L_sq  = p[0] * p[0] + c * c;
     double cos_q3 = (L_sq - LEG_L1 * LEG_L1 - LEG_L2 * LEG_L2) / (2.0 * LEG_L1 * LEG_L2);
 
@@ -78,7 +77,7 @@ void leg_ik(int leg, const double p[3], double q[CFG_JOINTS_PER_LEG])
     if (cos_q3 >  1.0) cos_q3 =  1.0;
     if (cos_q3 < -1.0) cos_q3 = -1.0;
 
-    q[JNT_KNEE] = -acos(cos_q3);   /* ramo negativo: il ginocchio piega all'indietro, idendico a fare acos(180 - cos_q3) */
+    q[JNT_KNEE] = -acos(cos_q3);   
 
     /* Passo 3: usiamo di nuovo il teorema del coseno, questa volta per
        ricavare l'angolo dell'anca */

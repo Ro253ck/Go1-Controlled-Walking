@@ -4,12 +4,12 @@
 #include "rt_time.h"
 
 /*Periodi dei thread */
-#define CFG_SIM_PERIOD_NS       (2   * RT_NS_PER_MS)   /* 500 Hz, pari al timestep del modello */
+#define CFG_SIM_PERIOD_NS       (2   * RT_NS_PER_MS)   /* 500 Hz */
 #define CFG_ESTIMATOR_PERIOD_NS (4   * RT_NS_PER_MS)   /* 250 Hz */
 #define CFG_GAIT_PERIOD_NS      (10  * RT_NS_PER_MS)   /* 100 Hz */
 #define CFG_WATCHDOG_PERIOD_NS  (20  * RT_NS_PER_MS)   /*  50 Hz */
 #define CFG_COMMAND_PERIOD_NS   (20  * RT_NS_PER_MS)   /*  50 Hz */
-#define CFG_LOGGER_PERIOD_NS    (20  * RT_NS_PER_MS)   /*  50 Hz, alzato da 10 per risolvere la fase */
+#define CFG_LOGGER_PERIOD_NS    (20  * RT_NS_PER_MS)   /*  50 Hz*/
 #define CFG_RENDER_PERIOD_NS    (33  * RT_NS_PER_MS)   /*  30 Hz, best effort */
 
 /* Rilasci persi recuperati di fila prima di risincronizzare: limita la raffica di recupero. */
@@ -49,16 +49,15 @@ enum { JNT_ABAD = 0, JNT_HIP = 1, JNT_KNEE = 2 };
 #define CFG_GAIT_DUTY       0.55    /* beta, frazione del ciclo in appoggio */
 #define CFG_BODY_HEIGHT     0.26    /* h0, m */
 #define CFG_FOOT_CLEARANCE  0.05    /* H, apice del volo da terra, m */
-#define CFG_RAIBERT_K       0.15    /* s; ottimo misurato, vicino a sqrt(h/g)=0.163 */
-#define CFG_RAIBERT_MAX     0.06    /* m; tiene il piede dentro lo spazio di lavoro */
+#define CFG_RAIBERT_K       0.15    
+#define CFG_RAIBERT_MAX     0.06    
 //#define CFG_GAIT_RAMP       0.50    /* s per far entrare o uscire l'andatura */
 #define CFG_GAIT_RAMP       1.00
 
-/* Filtro complementare: costante di tempo 1/kp. Il gate sospende la correzione
-   quando la forza specifica misurata si allontana da g, cioe' in accelerazione. */
+/* Filtro complementare*/
 
 #define ATT_GRAVITY         9.81    /* m/s^2; il valore usato dal modello MuJoCo */
-#define CFG_ATT_KP          1.0     /* 1/s, costante di tempo di un secondo */
+#define CFG_ATT_KP          1.0     /*Quanto teniamo in conta l'accellerometro per la correzzione*/
 #define CFG_ATT_SEED_TRIES  500     /* ~2 s prima di seminare comunque */
 #define CFG_ATT_GATE        2.0     /* m/s^2 di scarto da g oltre cui ignorare */
 
@@ -81,14 +80,14 @@ enum { JNT_ABAD = 0, JNT_HIP = 1, JNT_KNEE = 2 };
 
 #define CFG_WD_TILT_MAX     1.57    /* rad, 90 gradi: tronco sul fianco, da li' un
                                        quadrupede non si rialza piu' */
-#define CFG_WD_DEBOUNCE     20      /* su una finestra di 32 cicli, 640 ms a 50 Hz */
+#define CFG_WD_DEBOUNCE     20      /* su una finestra di 32 cicli, tolleriamo al massimo 20 letture pericolse*/
 #define CFG_WD_LIVENESS     10      /* cicli di watchdog senza nuove pubblicazioni */
 
 #define CFG_LOG_PATH        "logs/run.csv"
 
 /* Due disturbi deliberati, per poter dimostrare la supervisione invece di argomentarla. */
 
-#define CFG_PUSH_FORCE      180.0   /* N di lato, 60 ms: usa due terzi del margine di tilt */
+#define CFG_PUSH_FORCE      180.0   /*forza applicat in N */
 #define CFG_PUSH_CYCLES     30      /* cicli di sim, 60 ms */
 
 #endif /* CONFIG_H */

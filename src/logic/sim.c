@@ -66,7 +66,7 @@ int sim_init(sim_t *s, const char *model_path, char *err, int err_sz)
     s->adr_gyro = sensor_offset(s->m, "imu_gyro");
     s->adr_acc  = sensor_offset(s->m, "imu_acc");
 
-    sim_set_gains(s, 100.0, 0.0);
+    sim_set_gains(s, CFG_KP_DEFAULT, CFG_KD_DEFAULT);
     return 0;
 }
 
