@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-/*Stato*/
+/*State*/
 void bb_state_init(bb_state_t *bb)
 {
     memset(&bb->data, 0, sizeof(bb->data));
@@ -52,7 +52,7 @@ int bb_state_tryread(bb_state_t *bb, robot_state_t *out)
     return 1;
 }
 
-/*Comandi operatore */
+/*Operator commands */
 
 void bb_cmd_init(bb_cmd_t *bb, const cmd_t *initial)
 {
@@ -165,7 +165,7 @@ void bb_imu_read(bb_imu_t *bb, imu_t *out)
     pthread_mutex_unlock(&bb->mtx);
 }
 
-/*Attidute */
+/*Attitude */
 
 void bb_att_init(bb_att_t *bb, const att_t *initial)
 {

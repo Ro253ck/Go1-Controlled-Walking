@@ -1,8 +1,8 @@
 #ifndef TH_GAIT_H
 #define TH_GAIT_H
 
-/* Trasforma il comando dell'operatore in riferimenti di giunto: orologio di
-   fase, traiettorie dei piedi, cinematica inversa. L'unico scrittore di bb_des. */
+/* Turns the operator command into joint references: phase
+   clock, foot trajectories, inverse kinematics. The only writer of bb_des. */
 
 #include "blackboard.h"
 #include "gait.h"
@@ -11,11 +11,11 @@
 #include <stdatomic.h>
 
 typedef struct {
-    bb_state_t *bb_state;   /* lettura velocita' misurata del corpo */
-    bb_cmd_t   *bb_cmd;     /* lettura comando dell'operatore */
-    bb_att_t   *bb_att;     /* lettura assetto stimato*/
+    bb_state_t *bb_state;   /* read: measured body velocity */
+    bb_cmd_t   *bb_cmd;     /* read: operator command */
+    bb_att_t   *bb_att;     /* read: estimated attitude*/
 
-    bb_des_t   *bb_des;     /* scrittura */
+    bb_des_t   *bb_des;     /* write */
     atomic_int *running;
 
     gait_params_t params;

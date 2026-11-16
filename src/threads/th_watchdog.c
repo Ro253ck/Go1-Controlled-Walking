@@ -3,8 +3,8 @@
 #include <math.h>
 #include <string.h>
 
-/* Quanti bit a 1 ci sono nella storia: cioe' per quanti dei 32 cicli
-   registrati la condizione e' stata vera. */
+/* How many bits are set in the history: that is, for how many of the 32
+   recorded cycles the condition has been true. */
 static int count_ones(uint32_t v)
 {
     int n = 0;
@@ -15,8 +15,8 @@ static int count_ones(uint32_t v)
     return n;
 }
 
-/* Registra la condizione in una finestra di 32 cicli e scatta quando e'
-   rimasta vera per almeno `m` di essi. A 50 Hz la finestra e' 640 ms. */
+/* Records the condition in a window of 32 cycles and fires when it has
+   stayed true for at least `m` of them. At 50 Hz the window is 640 ms. */
 static int debounce(uint32_t *hist, int cond, int m)
 {
     *hist = (*hist << 1) | (cond ? 1u : 0u);
@@ -34,8 +34,8 @@ void *th_watchdog_run(void *arg)
     uint64_t prev_des = 0;
     int      miss_des = 0;
 
-    /*Serve per garantire che una volta accaduto un guasto, il robot resti e terra qualsiasi comando dato.
-      Bisogna far ripartire la simulazione per far riandare il robot. */
+    /*It guarantees that once a fault has happened the robot stays on the ground whatever command is given.
+      The simulation has to be restarted to make the robot move again. */
     uint32_t latched = 0;
 
     memset(&safe, 0, sizeof(safe));
@@ -49,7 +49,7 @@ void *th_watchdog_run(void *arg)
         bb_imu_read(c->bb_imu, &imu);
         bb_des_read(c->bb_des, &des);
 
-        /* Utilizziamo l'accelerometro per ricavarci l'inclinazione*/
+        /* We use the accelerometer to obtain the tilt*/
         {
             const double n = sqrt(imu.acc[0]*imu.acc[0] + imu.acc[1]*imu.acc[1]
                                 + imu.acc[2]*imu.acc[2]);
@@ -64,13 +64,13 @@ void *th_watchdog_run(void *arg)
             }
         }
 
-        /* Controlli di vitalità */
+        /* Liveness checks */
         miss_des = (des.seq == prev_des) ? miss_des + 1 : 0;
         prev_des = des.seq;
 
         if (miss_des > CFG_WD_LIVENESS) alarms |= WD_DEAD_GAIT;
 
-        /* Severita': una sola risposta possibile, togliere la coppia. */
+        /* Severity: only one possible response, remove the torque. */
         latched |= alarms;
         safe.mode  = latched ? SAFE_STOP : SAFE_OK;
         safe.alarms = latched;

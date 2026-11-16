@@ -4,14 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
-/*Ci da l'indice dei sensori*/
+/*Gives us the index of the sensors*/
 static int sensor_offset(const mjModel *m, const char *name)
 {
     int id = mj_name2id(m, mjOBJ_SENSOR, name);
     return (id < 0) ? -1 : m->sensor_adr[id];
 }
 
-/*Setta i valori per il PD*/
+/*Sets the values for the PD*/
 void sim_set_gains(sim_t *s, double kp, double kd)
 {
     for (int i = 0; i < CFG_NUM_JOINTS; i++) {
@@ -24,11 +24,11 @@ int sim_init(sim_t *s, const char *model_path, char *err, int err_sz)
 {
     memset(s, 0, sizeof(*s));
 
-    /*Carica il modello XML*/
+    /*Loads the XML model*/
     s->m = mj_loadXML(model_path, NULL, err, err_sz);
     if (!s->m) return -1;
 
-    /*Effetuiamo vari controlli per vedere se i parametri che descrivono il modello corrispondono*/
+    /*We run several checks to see whether the parameters describing the model match*/
     if (s->m->nu != CFG_NUM_JOINTS) {
         snprintf(err, (size_t)err_sz, "expected %d actuators, model has %ld",
                  CFG_NUM_JOINTS, (long)s->m->nu);
@@ -53,7 +53,7 @@ int sim_init(sim_t *s, const char *model_path, char *err, int err_sz)
         return -1;
     }
 
-    /*Chiediamo al modello dove stanno in qpos e qvel i giunti mossi dagli attuatori*/
+    /*We ask the model where, in qpos and qvel, the joints driven by the actuators are*/
     for (int i = 0; i < CFG_NUM_JOINTS; i++) {
         int jid = s->m->actuator_trnid[2 * i];
         s->qadr[i] = s->m->jnt_qposadr[jid];
@@ -79,7 +79,7 @@ void sim_free(sim_t *s)
     s->m = NULL;
 }
 
-/*Utilizzata per settare il robot nella posizone key_frame (posizione di inzio dove lui è perfettamente fermo e non inclinato)*/
+/*Used to set the robot into the key_frame pose (starting pose where it is perfectly still and not tilted)*/
 int sim_reset_to_key(sim_t *s, const char *key_name)
 {
     int k = mj_name2id(s->m, mjOBJ_KEY, key_name);
@@ -87,8 +87,8 @@ int sim_reset_to_key(sim_t *s, const char *key_name)
 
     mj_resetDataKeyframe(s->m, s->d, k);
 
-    /* Tiene la posa del keyframe: il bersaglio del PD parte dove parte il
-       robot, cosi' il primo ciclo non chiede nessun movimento. */
+    /* Holds the keyframe pose: the PD target starts where the
+       robot starts, so the first cycle asks for no movement. */
     for (int i = 0; i < CFG_NUM_JOINTS; i++) {
         s->q_des[i]  = s->d->qpos[s->qadr[i]];
         s->qd_des[i] = 0.0;
@@ -109,9 +109,9 @@ void sim_push(sim_t *s, double fx, double fy, double fz)
 
 void sim_step(sim_t *s)
 {
-    /* xfrc_applied resta impostato finche' non lo si azzera, quindi il
-       conto alla rovescia deve riscriverlo a zero, non solo smettere di
-       aggiornarlo. */
+    /* xfrc_applied stays set until it is cleared, so the
+       countdown must write it back to zero, not just stop
+       updating it. */
     if (s->trunk_body >= 0) {
         mjtNum *f = &s->d->xfrc_applied[6 * s->trunk_body];
         for (int i = 0; i < 6; i++){
@@ -126,19 +126,19 @@ void sim_step(sim_t *s)
     }
 
     for (int i = 0; i < CFG_NUM_JOINTS; i++) {
-        /*Calcolo della coppia*/
+        /*Computation of the torque*/
         double q   = s->d->qpos[s->qadr[i]];
         double qd  = s->d->qvel[s->vadr[i]];
         double tau = s->gain_scale *
                      (s->kp[i] * (s->q_des[i] - q) + s->kd[i] * (s->qd_des[i] - qd));
 
-        /* Controlliamo che il tau non vada mai ad infinito */
+        /* We check that tau never goes to infinity */
         if (!isfinite(tau)) {
             tau = 0.0;
             s->n_nonfinite++;
         }
 
-        /* Controllo Saturazione */
+        /* Saturation check */
         double lo = s->m->actuator_ctrlrange[2 * i];
         double hi = s->m->actuator_ctrlrange[2 * i + 1];
         if (tau < lo)      tau = lo;
@@ -147,30 +147,30 @@ void sim_step(sim_t *s)
         s->d->ctrl[i] = tau;
     }
 
-    /*Manda avanti la simulazione*/
+    /*Advances the simulation*/
     mj_step(s->m, s->d);
 }
 
-/*Riempi la struttura dati robot_state_t*/
+/*Fills in the robot_state_t data structure*/
 void sim_snapshot(const sim_t *s, robot_state_t *out)
 {
-    out->seq      = 0;   /* assegnato dalla lavagna al momento della pubblicazione */
+    out->seq      = 0;   /* assigned by the blackboard at publication time */
     out->sim_time = s->d->time;
 
     for (int i = 0; i < CFG_NQ; i++)
         out->qpos[i] = s->d->qpos[i];
 
-    /* Disposizione del giunto libero: qpos[0..2] traslazione, qpos[3..6]
-       quaternione, qvel[0..2] velocita' lineare in coordinate mondo. */
+    /* Free joint layout: qpos[0..2] translation, qpos[3..6]
+       quaternion, qvel[0..2] linear velocity in world coordinates. */
     for (int i = 0; i < 3; i++)
         out->base_pos[i] = s->d->qpos[i];
     for (int i = 0; i < 4; i++)
         out->base_quat[i] = s->d->qpos[3 + i];
 
-    /* Pubblica la velocita' nel sistema corpo, che e' quello in cui vivono il
-       comando e il gait. I due coincidono solo mentre il robot guarda nella
-       direzione iniziale: lasciarla in coordinate mondo funziona fino alla
-       prima curva e poi corrompe silenziosamente il termine di Raibert. */
+    /* Publishes the velocity in the body frame, which is the one the
+       command and the gait live in. The two coincide only while the robot faces the
+       initial direction: leaving it in world coordinates works until the
+       first turn and then silently corrupts the Raibert term. */
     {
         mjtNum qinv[4], v_world[3];
         for (int i = 0; i < 3; i++) v_world[i] = s->d->qvel[i];
@@ -179,7 +179,7 @@ void sim_snapshot(const sim_t *s, robot_state_t *out)
     }
 }
 
-/*Riempi la struttura dati imu_T*/
+/*Fills in the imu_t data structure*/
 void sim_imu_snapshot(const sim_t *s, imu_t *out)
 {
     out->seq      = 0;

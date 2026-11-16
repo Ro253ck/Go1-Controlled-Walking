@@ -28,10 +28,10 @@ static void on_sigint(int sig)
     atomic_store(&g_running, 0);
 }
 
-/* Riferimenti di giunto che tengono l'appoggio nominale. Servono a
-   inizializzare bb_des, cosi' il thread sim non vede mai un riferimento
-   tutto a zero, che stenderebbe le gambe dritte prima che il thread gait
-   abbia pubblicato qualcosa. */
+/* Joint references that hold the nominal stance. They are used to
+   initialise bb_des, so the sim thread never sees an all-zero
+   reference, which would straighten the legs before the gait thread
+   has published anything. */
 static void seed_stance(joint_cmd_t *des, double height)
 {
     feet_target_t feet;
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     double  kraib      = (argc > 6) ? atof(argv[6]) : CFG_RAIBERT_K;
     double  att_kp     = (argc > 7) ? atof(argv[7]) : CFG_ATT_KP_LEVEL;
 
-    /*Definitimao tutte le blackboard e strutture principali*/
+    /*We declare all the blackboards and the main structures*/
     sim_t      sim;
     bb_state_t bb_state;
     bb_cmd_t   bb_cmd;
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     bb_att_t   bb_att;
     bb_safe_t  bb_safe;
 
-    /*Definiamo tutte i thread context*/
+    /*We declare all the thread contexts*/
     th_sim_ctx_t     ctx_sim;
     th_gait_ctx_t    ctx_gait;
     th_estimator_ctx_t ctx_est;
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     att_t         att0;
     safety_t      safe0;
     rt_acc_t      frame_dt;
-    rt_acc_t      roll_mrad, pitch_mrad;   /* telemetria dell'assetto vero */
+    rt_acc_t      roll_mrad, pitch_mrad;   /* telemetry of the true attitude */
     char          err[1024] = {0};
 
     uint64_t frames = 0, busy_skips = 0;
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 
     signal(SIGINT, on_sigint);
 
-    /* Permette a una run di scegliere una scena diversa senza ricompilare,
-       ed e' cosi' che si fa il confronto sul piano inclinato. */
+    /* Lets a run pick a different scene without recompiling,
+       and this is how the comparison on the slope is done. */
     const char *model = getenv("GO1_MODEL");
     if (!model) model = CFG_MODEL_PATH;
 
@@ -100,8 +100,8 @@ int main(int argc, char **argv)
     sim_reset_to_key(&sim, "home");
     sim_set_gains(&sim, kp, kd);
 
-    /* Le lavagne partono gia' popolate, cosi' nessun lettore puo' mai
-       osservare una struttura azzerata fra l'avvio e la prima pubblicazione. */
+    /* The blackboards start out already populated, so no reader can ever
+       observe a zeroed structure between startup and the first publication. */
     cmd0.vx = vx0;
     cmd0.vy = 0.0;
     cmd0.wz = wz0;
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 
     ctx_gait.bb_state  = &bb_state;
     ctx_gait.bb_cmd    = &bb_cmd;
-    ctx_gait.bb_att    = &bb_att;   /* sempre collegato: l'interruttore e' cmd.att_on */
+    ctx_gait.bb_att    = &bb_att;   /* always wired up: the switch is cmd.att_on */
     ctx_gait.bb_des    = &bb_des;
     ctx_gait.running   = &g_running;
     gait_params_default(&ctx_gait.params);
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     if (have_tty) th_command_help();
     else          puts("  (stdin is not a terminal: keyboard control inactive)\n");
 
-    /*Creazione dei thread*/
+    /*Thread creation*/
     for (int i = 0; i < 6; i++)
         if (rt_thread_start(&th[i]) != 0) { atomic_store(&g_running, 0); }
 
@@ -224,8 +224,8 @@ int main(int argc, char **argv)
                       / ((double)(now - t0) / (double)RT_NS_PER_SEC);
 
         if (st.seq > 0) {
-            /* Solo telemetria: il controllore usa l'assetto stimato dal
-               filtro, non questa verita' di simulazione. */
+            /* Telemetry only: the controller uses the attitude estimated by the
+               filter, not this simulation ground truth. */
             double r, p;
             quaternion_to_rpy(st.base_quat, &r, &p, NULL);
             rt_acc_add(&roll_mrad,  (int64_t)(1e3 * r));

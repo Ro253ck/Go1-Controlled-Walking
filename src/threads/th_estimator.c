@@ -22,24 +22,24 @@ void *th_estimator_run(void *arg)
         bb_imu_read(c->bb_imu, &imu);
 
         if (imu.seq == last_imu_seq) {
-            /*Niente di nuovo da integrare*/
+            /*Nothing new to integrate*/
             rt_periodic_done(&c->per);
             continue;
         }
         last_imu_seq = imu.seq;
 
         if (!c->filter.seeded) {
-            /* Si parte allineati alla gravita' invece di convergere da un
-               assetto arbitrario. Il seeding rifiuta i campioni che non
-               somigliano alla gravita', quindi qui si riprova finche' il
-               robot non si e' assestato. */
+            /* We start aligned with gravity instead of converging from an
+               arbitrary attitude. The seeding rejects samples that do not
+               look like gravity, so here we retry until the
+               robot has settled. */
             filter_seed(&c->filter, imu.acc);
             last_time = imu.sim_time;
             c->n_seed_tries++;
 
             if (!c->filter.seeded && c->n_seed_tries > CFG_ATT_SEED_TRIES) {
-                /* In caso dopo un tot di tentavi non risuciamo a inizalizzarlo in maniera corretta
-                * accettiamo l'ipotesi di essere in piano */
+                /* If after a number of attempts we cannot initialise it correctly
+                * we accept the assumption of being level */
                 c->filter.seeded = 1;
             }
             rt_periodic_done(&c->per);
@@ -47,8 +47,8 @@ void *th_estimator_run(void *arg)
         }
 
         {
-            /* Tempo simulato, come nel gait: l'intervallo che conta e' quello
-               di cui e' avanzata la fisica, non quello impiegato dallo
+            /* Simulated time, as in the gait: the interval that matters is the one
+               the physics has advanced by, not the one taken by the
                scheduler. */
             const double dt = imu.sim_time - last_time;
             last_time = imu.sim_time;

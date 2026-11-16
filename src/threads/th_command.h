@@ -1,7 +1,7 @@
 #ifndef TH_COMMAND_H
 #define TH_COMMAND_H
 
-/* Ingresso da tastiera. L'unico scrittore di bb_cmd.*/
+/* Keyboard input. The only writer of bb_cmd.*/
 
 #include "blackboard.h"
 #include "rt_time.h"
@@ -15,9 +15,9 @@ typedef struct {
     rt_periodic_t per;
 } th_command_ctx_t;
 
-/* Mette il terminale in modalita' raw non bloccante; lo ripristina all'uscita.
-   Ritorna 0 quando stdin e' un terminale, -1 altrimenti (in quel caso
-   l'ingresso resta inattivo). */
+/* Puts the terminal into non-blocking raw mode; restores it on exit.
+   Returns 0 when stdin is a terminal, -1 otherwise (in that case
+   the input stays inactive). */
 int  th_command_setup_terminal(void);
 void th_command_restore_terminal(void);
 

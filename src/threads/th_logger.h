@@ -1,7 +1,7 @@
 #ifndef TH_LOGGER_H
 #define TH_LOGGER_H
 
-/* Telemetria su file CSV. La priorita' piu' bassa del sistema. */
+/* Telemetry to a CSV file. The lowest priority in the system. */
 
 #include "blackboard.h"
 #include "rt_time.h"
@@ -18,7 +18,7 @@ typedef struct {
     FILE       *fp;
 
     rt_periodic_t per;
-    rt_acc_t      write_ns;   /* quanto dura davvero la scrittura su file */
+    rt_acc_t      write_ns;   /* how long the write to file actually takes */
 } th_logger_ctx_t;
 
 void *th_logger_run(void *arg);

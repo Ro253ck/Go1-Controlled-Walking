@@ -1,13 +1,13 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-/* Visualizzazione best-effort. Gira sul thread principale perche' GLFW e
-   OpenGL vogliono un unico thread proprietario, e resta su SCHED_OTHER
-   cosi' non puo' mai rubare tempo all'anello di controllo.
+/* Best-effort visualisation. It runs on the main thread because GLFW and
+   OpenGL want a single owning thread, and it stays on SCHED_OTHER
+   so it can never steal time from the control loop.
 
-   Non tocca mai i mjData vivi: ne tiene una copia privata, vi carica la posa
-   pubblicata sulla lavagna e ricalcola solo quello che serve a disegnare.
-   Bloccare i dati vivi terrebbe il mutex per un intero fotogramma. */
+   It never touches the live mjData: it keeps a private copy, loads into it the
+   pose published on the blackboard and recomputes only what is needed to draw.
+   Locking the live data would hold the mutex for a whole frame. */
 
 #include "state.h"
 
@@ -16,23 +16,23 @@
 
 typedef struct {
     GLFWwindow   *win;
-    const mjModel *m;   /*In sola lettura*/
-    mjData       *d;      /* privati, solo per il disegno */
+    const mjModel *m;   /*Read only*/
+    mjData       *d;      /* private, for drawing only */
     mjvCamera     cam;
     mjvOption     opt;
     mjvScene      scn;
     mjrContext    con;
 
-    int    btn_left, btn_middle, btn_right; /*Stato pulsanit del mouse*/
-    double lastx, lasty; /*Ultima posizione del cursore*/
+    int    btn_left, btn_middle, btn_right; /*Mouse button state*/
+    double lastx, lasty; /*Last cursor position*/
 
     char   hud[384];
-    double att_kp;      /* mostrato sull'HUD, impostato da main dopo l'init */
+    double att_kp;      /* shown on the HUD, set by main after init */
     char   banner[96];
 } render_t;
 
-/* Ritorna 0 se riesce, -1 quando non si e' potuta creare nessuna finestra
-   (esecuzione senza display). */
+/* Returns 0 on success, -1 when no window could be created
+   (run without a display). */
 int  render_init(render_t *r, const mjModel *m);
 void render_free(render_t *r);
 

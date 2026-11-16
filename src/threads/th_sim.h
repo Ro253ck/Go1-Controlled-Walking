@@ -9,12 +9,12 @@
 
 typedef struct {
     sim_t      *sim;
-    bb_state_t *bb_state;   /* scrittura */
-    bb_imu_t   *bb_imu;     /* scrittura */
+    bb_state_t *bb_state;   /* write */
+    bb_imu_t   *bb_imu;     /* write */
 
-    bb_des_t   *bb_des;     /* lettura: riferimenti di giunto dal thread gait */
-    bb_safe_t  *bb_safe;    /* lettura: agisce sulla decisione del watchdog */
-    bb_cmd_t   *bb_cmd;     /* lettura: solo iniezione di guasti */
+    bb_des_t   *bb_des;     /* read: joint references from the gait thread */
+    bb_safe_t  *bb_safe;    /* read: acts on the watchdog decision */
+    bb_cmd_t   *bb_cmd;     /* read: fault injection only */
     
     atomic_int *running;
 

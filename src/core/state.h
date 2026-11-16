@@ -1,70 +1,70 @@
 #ifndef STATE_H
 #define STATE_H
- 
+
 #include "config.h"
 #include <stdint.h>
 
 typedef struct {
-    uint64_t seq;          /* incrementato dalla lavagna a ogni pubblicazione */
-    double   sim_time;     /* orologio di MuJoCo*/
+    uint64_t seq;          /* incremented by the blackboard on every publication */
+    double   sim_time;     /* MuJoCo clock*/
 
-    double   qpos[CFG_NQ]; /* posizione generalizzata completa, per il renderer */
-    double   base_pos[3];  /* verità di simulazione, solo telemetria */
-    double   base_quat[4]; /* verità di simulazione, solo riferimento per l'estimatore */
-    double   base_vel[3];  /* verità di simulazione, utilizzata il termine di Raibert */
+    double   qpos[CFG_NQ]; /* full generalised position, for the renderer */
+    double   base_pos[3];  /* simulation ground truth, telemetry only */
+    double   base_quat[4]; /* simulation ground truth, reference for the estimator only */
+    double   base_vel[3];  /* simulation ground truth, used by the Raibert term */
 } robot_state_t;
 
-/* Misure inerziali grezze. Scritte da th_sim, lette da th_estimator.*/
+/* Raw inertial measurements. Written by th_sim, read by th_estimator.*/
 typedef struct {
     uint64_t seq;
     double   sim_time;
-    double   gyro[3];   /* rad/s, sistema corpo */
-    double   acc[3];    /* m/s^2, forza specifica, sistema corpo */
+    double   gyro[3];   /* rad/s, body frame */
+    double   acc[3];    /* m/s^2, specific force, body frame */
 } imu_t;
 
-/* Assetto stimato. Scritto da th_estimator, letto da th_gait. */
+/* Estimated attitude. Written by th_estimator, read by th_gait. */
 typedef struct {
     uint64_t seq;
-    double   q[4];              /* da corpo a mondo */
+    double   q[4];              /* body to world */
     double   roll, pitch, yaw;
 } att_t;
 
-/* Stato di sicurezza. Scritto da th_watchdog, letto da th_sim e th_gait.
-   La decisione è presa a bassa frequenza e bassa priorità; l'azione è
-   eseguita dal thread a priorità più alta del sistema.*/
-typedef enum {
+/* Safety state. Written by th_watchdog, read by th_sim and th_gait.
+   The decision is taken at low rate and low priority; the action is
+   carried out by the highest priority thread in the system.*/
+enum {
     SAFE_OK = 0,
-    SAFE_STOP      /* coppia nulla su tutti i giunti */
-} safe_mode_t;
+    SAFE_STOP      /* zero torque on every joint */
+};
 
 enum {
-    WD_TILT      = 1u << 0,   /* il tronco e' inclinato oltre il limite  */
-    WD_DEAD_GAIT = 1u << 6    /* il gait ha smesso di pubblicare         */
+    WD_TILT      = 1u << 0,   /* the trunk is tilted beyond the limit     */
+    WD_DEAD_GAIT = 1u << 6    /* the gait has stopped publishing          */
 };
 
 typedef struct {
     uint64_t seq;
     int      mode;
-    uint32_t alarms;       /* maschera degli allarmi scattati; col latch non si spegne */
+    uint32_t alarms;       /* mask of the alarms that fired; latched, so it never clears */
 } safety_t;
 
-/* Ingresso dell'operatore. Scritto da th_command, letto da th_gait. */
+/* Operator input. Written by th_command, read by th_gait. */
 typedef struct {
     uint64_t seq;
-    double   vx, vy, wz;   /* velocità desiderata, sistema corpo */
-    double   height;       /* altezza desiderata del tronco */
-    int      gait_on;      /* 0 resta fermo, 1 trotta */
+    double   vx, vy, wz;   /* desired velocity, body frame */
+    double   height;       /* desired trunk height */
+    int      gait_on;      /* 0 stand still, 1 trot */
     int      quit;
 
-    /* Iniezione di guasti, per il watchdog. */
-    uint32_t push;         /* incrementato a ogni richiesta di spinta */
-    double   push_force;   /* N, impostata insieme al contatore */
-    int      fault_gait;   /* 1 = il thread del gait smette di pubblicare */
-    
-    int      att_on;       /* 1 = l'assetto stimato alimenta il gait */
+    /* Fault injection, for the watchdog. */
+    uint32_t push;         /* incremented on every shove request */
+    double   push_force;   /* N, set together with the counter */
+    int      fault_gait;   /* 1 = the gait thread stops publishing */
+
+    int      att_on;       /* 1 = the estimated attitude feeds the gait */
 } cmd_t;
 
-/* Riferimenti dei giunti. Scritti da th_gait, letti da th_sim.*/
+/* Joint references. Written by th_gait, read by th_sim.*/
 typedef struct {
     uint64_t seq;
     double   q[CFG_NUM_JOINTS];

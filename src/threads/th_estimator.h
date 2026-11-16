@@ -8,8 +8,8 @@
 #include <stdatomic.h>
 
 typedef struct {
-    bb_imu_t *bb_imu;     /* lettura: le misure inerziali grezze */
-    bb_att_t *bb_att;     /* scrittura */
+    bb_imu_t *bb_imu;     /* read: the raw inertial measurements */
+    bb_att_t *bb_att;     /* write */
     atomic_int *running;
 
     filter_t filter;

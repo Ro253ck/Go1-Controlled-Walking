@@ -24,9 +24,9 @@ int rt_have_rt_privileges(void)
     int  saved = sched_getscheduler(0);
     int  ok;
 
-    /* Si sonda provandoci e annullando subito: piu' economico e piu' onesto
-       che leggere gli rlimit, visto che le capability possono concedere
-       questo permesso senza toccarli. */
+    /* We probe by trying and undoing it straight away: cheaper and more honest
+       than reading the rlimits, since capabilities can grant this
+       permission without touching them. */
     if (sched_setscheduler(0, SCHED_FIFO, &sp) != 0)
         return 0;
 
@@ -49,9 +49,9 @@ int rt_thread_start(rt_thread_t *t)
 
     if (t->priority > 0) {
         sp.sched_priority = t->priority;
-        /* Senza EXPLICIT_SCHED la politica e la priorita' impostate qui sotto
-           vengono ignorate e il thread eredita in silenzio quelle di chi lo
-           ha creato. */
+        /* Without EXPLICIT_SCHED the policy and priority set below
+           are ignored and the thread silently inherits those of whoever
+           created it. */
         pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
         pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
         pthread_attr_setschedparam(&attr, &sp);
@@ -64,7 +64,7 @@ int rt_thread_start(rt_thread_t *t)
         pthread_attr_setaffinity_np(&attr, sizeof(set), &set);
     }
 
-    /* pthread_create restituisce il codice d'errore; non imposta errno. */
+    /* pthread_create returns the error code; it does not set errno. */
     rc = pthread_create(&t->tid, &attr, t->entry, t->arg);
 
     if (rc == 0) {
@@ -91,14 +91,14 @@ int rt_thread_join(rt_thread_t *t)
     return pthread_join(t->tid, NULL);
 }
 
-/*Istanziamo Priority inheritance come protocollo per gestione delle risorse*/
+/*We instantiate priority inheritance as the resource management protocol*/
 void rt_mutex_init_pi(pthread_mutex_t *m)
 {
     pthread_mutexattr_t ma;
 
     pthread_mutexattr_init(&ma);
     if (pthread_mutexattr_setprotocol(&ma, PTHREAD_PRIO_INHERIT) != 0) {
-        /*In caso di errore usciamo, non ha senso proseguire visto che questa è un'assunzione fondamentale*/
+        /*On error we exit, there is no point going on since this is a fundamental assumption*/
         fprintf(stderr, "FATAL: PTHREAD_PRIO_INHERIT unavailable\n");
         exit(EXIT_FAILURE);
     }

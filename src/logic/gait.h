@@ -4,41 +4,41 @@
 #include "config.h"
 #include "leg_kin.h"
 
-/* Sfasamenti che definiscono il trotto: le coppie diagonali si muovono
-   insieme. Indicizzati FR, FL, RR, RL. */
+/* Phase offsets that define the trot: the diagonal pairs move
+   together. Indexed FR, FL, RR, RL. */
 extern const double GAIT_TROT_OFFSET[CFG_NUM_LEGS];
 
 typedef struct {
-    double period;      /* T_g, un appoggio più un volo completi */
-    double duty;        /* beta, frazione del ciclo trascorsa in appoggio */
-    double height;      /* h0, altezza nominale del tronco */
-    double clearance;   /* H, apice del volo */
+    double period;      /* T_g, one full stance plus swing */
+    double duty;        /* beta, fraction of the cycle spent in stance */
+    double height;      /* h0, nominal trunk height */
+    double clearance;   /* H, swing apex */
     double raibert_k;
 } gait_params_t;
 
-/* Retroazione d'assetto applicata attraverso i piedi: nessun controllo di
-   forza, solo una gamba più lunga dal lato che si è abbassato. È l'unico
-   punto in cui la stima dell'IMU entra nell'anello di controllo. */
+/* Attitude feedback applied through the feet: no force control,
+   just a longer leg on the side that has dropped. It is the only
+   point where the IMU estimate enters the control loop. */
 typedef struct {
-    double roll, pitch;    /* assetto stimato */
+    double roll, pitch;    /* estimated attitude */
     double kp;             
 } gait_attitude_t;
 
 void gait_params_default(gait_params_t *gp);
 
-/* Fase di una gamba all'istante t, in [0,1). */
+/* Phase of a leg at time t, in [0,1). */
 double gait_leg_phase(const gait_params_t *gp, double t, int leg);
 
-/* 1 finché la gamba è in appoggio. */
+/* 1 as long as the leg is in stance. */
 int gait_in_stance(const gait_params_t *gp, double phase);
 
-/* Obiettivi dei piedi nel sistema del tronco.*/
+/* Foot targets in the trunk frame.*/
 void gait_feet_targets(const gait_params_t *gp,
                        double t,
                        const double v_cmd[3],
                        const double v_meas[2],
                        double amplitude,
-                       const gait_attitude_t *att,   /* NULL lo disabilita */
+                       const gait_attitude_t *att,   /* NULL disables it */
                        feet_target_t *out);
 
 #endif /* GAIT_H */

@@ -2,8 +2,8 @@
 
 #include <math.h>
 
-/* FR e RL condividono una fase, FL e RR quella opposta: i due piedi a terra in ogni
-* istante sono diagonalmente oppsoti. */
+/* FR and RL share one phase, FL and RR the opposite one: the two feet on the ground at
+* any instant are diagonally opposite. */
 const double GAIT_TROT_OFFSET[CFG_NUM_LEGS] = { 0.0, 0.5, 0.5, 0.0 };
 
 
@@ -16,7 +16,7 @@ void gait_params_default(gait_params_t *gp)
     gp->raibert_k = CFG_RAIBERT_K;
 }
 
-/*Ritorna il punto a cui si trova la fase della gamba*/
+/*Returns the point the leg phase has reached*/
 double gait_leg_phase(const gait_params_t *gp, double t, int leg)
 {
     double ph = fmod(t / gp->period + GAIT_TROT_OFFSET[leg], 1.0);
@@ -24,18 +24,18 @@ double gait_leg_phase(const gait_params_t *gp, double t, int leg)
     return ph;
 }
 
-/*Ritorna se la gamba è in appoggio*/
+/*Returns whether the leg is in stance*/
 int gait_in_stance(const gait_params_t *gp, double phase)
 {
     return phase < gp->duty;
 }
 
-/* Hermite cubica su [0,1] con tangenti imposte agli estremi. Usata per la
-   parte orizzontale del volo: il piede deve staccarsi e tornare a terra
-   muovendosi alla velocità del terreno, altrimenti striscia al distacco e
-   slitta all'appoggio. 
-   Utilizzamo la stessa derivata per l'inizio e la fine quindi abbimao solo m
-   Invece u rappresenta a che punto sono del volo*/
+/* Cubic Hermite on [0,1] with tangents imposed at the endpoints. Used for the
+   horizontal part of the swing: the foot must lift off and return to the ground
+   moving at the speed of the terrain, otherwise it scuffs at lift-off and
+   slips at touchdown.
+   We use the same derivative for the start and the end, so we only have m
+   while u represents how far into the swing we are*/
 static double hermite(double p0, double p1, double m, double u)
 {
     const double u2 = u * u;
@@ -59,17 +59,17 @@ void gait_feet_targets(const gait_params_t *gp,
 {
     const double stance_time = gp->duty * gp->period;
 
-    /* Retroazione sul punto d'appoggio, alla Raibert: andare più veloce di
-       quanto comandato sposta in avanti tutto lo schema, così i piedi
-       atterrano più avanti e frenano. Applicata al punto di riferimento e non
-       solo al punto di atterraggio, il che mantiene appoggio e volo continui
-       all'istante del contatto. */
+    /* Footstep feedback, Raibert style: going faster than
+       commanded shifts the whole pattern forward, so the feet
+       land further ahead and brake. Applied to the reference point and not
+       only to the touchdown point, which keeps stance and swing continuous
+       at the instant of contact. */
     double corr_x = gp->raibert_k * (v_meas[0] - v_cmd[0]) * amplitude;
     double corr_y = gp->raibert_k * (v_meas[1] - v_cmd[1]) * amplitude;
 
-    /* Saturazione: subito dopo una variazione a gradino del comando l'errore
-       è grande quanto il comando stesso, e una correzione illimitata
-       chiederebbe un piede dove la gamba non arriva. */
+    /* Saturation: right after a step change in the command the error
+       is as large as the command itself, and an unbounded correction
+       would ask for a foot where the leg cannot reach. */
     if (corr_x >  CFG_RAIBERT_MAX) corr_x =  CFG_RAIBERT_MAX;
     if (corr_x < -CFG_RAIBERT_MAX) corr_x = -CFG_RAIBERT_MAX;
     if (corr_y >  CFG_RAIBERT_MAX) corr_y =  CFG_RAIBERT_MAX;
@@ -81,20 +81,20 @@ void gait_feet_targets(const gait_params_t *gp,
         leg_abad_pos(leg, hip);
         leg_nominal_foot(leg, gp->height, ref);
 
-        /* L'imbardata fa viaggiare ogni gamba a velocità diversa: il lato
-           esterno della curva spinge di più, esattamente come in un veicolo
-           cingolato. */
+        /* Yaw makes every leg travel at a different speed: the outer
+           side of the turn pushes more, exactly as in a tracked
+           vehicle. */
         const double vix = v_cmd[0] - v_cmd[2] * hip[1];
         const double viy = v_cmd[1] + v_cmd[2] * hip[0];
 
-        /* Terreno percorso da questo piede durante un appoggio. */
+        /* Ground covered by this foot during one stance. */
         const double sx = vix * stance_time * amplitude;
         const double sy = viy * stance_time * amplitude;
 
         const double bx = ref[0] + corr_x;
         const double by = ref[1] + corr_y;
 
-        /* Termine di livellamento */
+        /* Levelling term */
         double dz = 0.0;
         if (att) {
             dz = -(att->kp * att->roll)  * hip[1] - (att->kp * att->pitch) * hip[0];
@@ -104,8 +104,8 @@ void gait_feet_targets(const gait_params_t *gp,
         const double ph = gait_leg_phase(gp, t, leg);
 
         if (gait_in_stance(gp, ph)) {
-            /* Piede piantato a terra: scorre indietro sotto il corpo,
-               centrato in modo che in media stia sotto l'anca. */
+            /* Foot planted on the ground: it slides backwards under the body,
+               centred so that on average it sits below the hip. */
             const double s = ph / gp->duty;
 
             out->p[leg][0] = bx - sx * (s - 0.5);
@@ -114,15 +114,15 @@ void gait_feet_targets(const gait_params_t *gp,
         } else {
             const double u = (ph - gp->duty) / (1.0 - gp->duty);
 
-            /* Tangente agli estremi, in unità di u*/
+            /* Tangent at the endpoints, in units of u*/
             const double mx = -sx * (1.0 - gp->duty) / gp->duty;
             const double my = -sy * (1.0 - gp->duty) / gp->duty;
 
             out->p[leg][0] = hermite(bx - 0.5*sx, bx + 0.5*sx, mx, u);
             out->p[leg][1] = hermite(by - 0.5*sy, by + 0.5*sy, my, u);
 
-            /* Campana a pendenza nulla ai due estremi: il piede si solleva e
-               si posa senza strappi verticali. */
+            /* Bell with zero slope at both ends: the foot lifts and
+               sets down with no vertical jerk. */
             out->p[leg][2] = -gp->height + dz
                            + gp->clearance * amplitude
                            * 0.5 * (1.0 - cos(2.0 * M_PI * u));

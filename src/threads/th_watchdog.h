@@ -1,7 +1,7 @@
 #ifndef TH_WATCHDOG_H
 #define TH_WATCHDOG_H
 
-/* Supervisione di sicurezza. L'unico scrittore di bb_safe.*/
+/* Safety supervision. The only writer of bb_safe.*/
 #include "blackboard.h"
 #include "rt_time.h"
 
@@ -9,12 +9,12 @@
 
 
 typedef struct {
-    bb_imu_t   *bb_imu;     /* lettura: grezza, indipendente dall'estimatore */
-    bb_des_t   *bb_des;     /* lettura: solo vitalita' */
-    bb_safe_t  *bb_safe;    /* scrittura */
+    bb_imu_t   *bb_imu;     /* read: raw, independent of the estimator */
+    bb_des_t   *bb_des;     /* read: liveness only */
+    bb_safe_t  *bb_safe;    /* write */
     atomic_int *running;
 
-    uint32_t tilt_hist;     /* Sliding Window per accorgersi della caduta*/
+    uint32_t tilt_hist;     /* Sliding window to notice the fall*/
 
     rt_periodic_t per;
 } th_watchdog_ctx_t;

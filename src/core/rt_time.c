@@ -2,7 +2,7 @@
 
 #include <errno.h>
 
-/*accumulatore */
+/*accumulator */
 
 void rt_acc_reset(rt_acc_t *a)
 {
@@ -42,7 +42,7 @@ void rt_acc_report_us(const rt_acc_t *a, const char *name, FILE *out)
 int64_t rt_now_ns(void)
 {
     struct timespec ts;
-    /* CLOCK_MONOTONIC e non CLOCK_REALTIME per non aver problemi con NTP*/
+    /* CLOCK_MONOTONIC and not CLOCK_REALTIME so NTP cannot cause trouble*/
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (int64_t)ts.tv_sec * RT_NS_PER_SEC + ts.tv_nsec;
 }
@@ -50,7 +50,7 @@ int64_t rt_now_ns(void)
 struct timespec rt_ns_to_timespec(int64_t ns)
 {
     struct timespec ts;
-    /*Riempiamo la struttura dati*/
+    /*We fill in the data structure*/
     ts.tv_sec  = (time_t)(ns / RT_NS_PER_SEC);
     ts.tv_nsec = (long)  (ns % RT_NS_PER_SEC);
     return ts;
@@ -61,12 +61,12 @@ void rt_sleep_until(int64_t abs_ns)
     struct timespec ts = rt_ns_to_timespec(abs_ns);
     int rc;
 
-    /*TIME_ABSTIME ci fa dormine ci risveglia ad un dato istante non dopo una durata*/
+    /*TIMER_ABSTIME makes us sleep until a given instant, not for a duration*/
     while ((rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL)) == EINTR);
     (void)rc;
 }
 
-/*task periodico */
+/*periodic task */
 void rt_periodic_init(rt_periodic_t *p, int64_t period_ns, int max_catchup)
 {
     p->period_ns   = period_ns;
@@ -84,9 +84,9 @@ void rt_periodic_wait(rt_periodic_t *p)
 {
     rt_sleep_until(p->next_ns);
     p->start_ns = rt_now_ns();
-    /* Il jitter e' misurato rispetto al rilascio nominale, mai rispetto al
-       risveglio precedente: e' questo che impedisce all'errore di
-       accumularsi. */
+    /* The jitter is measured against the nominal release, never against the
+       previous wake-up: this is what stops the error from
+       accumulating. */
     rt_acc_add(&p->jitter, p->start_ns - p->next_ns);
     p->cycles++;
 }
@@ -97,19 +97,19 @@ void rt_periodic_done(rt_periodic_t *p)
 
     rt_acc_add(&p->exec, now - p->start_ns);
 
-    /* La griglia avanza incondizionatamente, a partire dal rilascio nominale
-       precedente e mai dall'istante misurato: e' questo che elimina la
-       deriva. */
+    /* The grid advances unconditionally, starting from the previous nominal
+       release and never from the measured instant: this is what eliminates
+       the drift. */
     p->next_ns += p->period_ns;
 
     if (now > p->next_ns) {
         int64_t missed = (now - p->next_ns) / p->period_ns + 1;
         p->overruns++;
         if (missed > (int64_t)p->max_catchup) {
-            /* Troppo in ritardo per rigiocare ogni rilascio perso senza
-               affamare i thread a priorita' minore: si salta al primo
-               rilascio futuro. La fase della griglia resta intatta perche'
-               aggiungiamo periodi interi. */
+            /* Too late to replay every missed release without
+               starving the lower priority threads: we jump to the first
+               future release. The phase of the grid stays intact because
+               we add whole periods. */
             p->next_ns += missed * p->period_ns;
             p->resyncs++;
         }

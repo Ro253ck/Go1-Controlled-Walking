@@ -16,10 +16,10 @@ void *th_sim_run(void *arg)
     while (atomic_load(c->running)) {
         rt_periodic_wait(&c->per);
 
-        /* Leggiamo struttura dati destination */
+        /* We read the destination data structure */
         bb_des_read(c->bb_des, &des);
 
-        /* Leggiamo struttura dati safety */
+        /* We read the safety data structure */
         bb_safe_read(c->bb_safe, &safe);
 
         bb_cmd_read(c->bb_cmd, &cmd);
@@ -34,12 +34,12 @@ void *th_sim_run(void *arg)
             c->sim->qd_des[i] = des.qd[i];
         }
 
-        /* Fisica e controllo girano interamente su dati privati del thread. */
+        /* Physics and control run entirely on data private to the thread. */
         sim_step(c->sim);
         sim_snapshot(c->sim, &st);
         sim_imu_snapshot(c->sim, &imu);
 
-        /* Aggiorniamo blackboard*/
+        /* We update the blackboards*/
         bb_state_write(c->bb_state, &st);
         bb_imu_write(c->bb_imu, &imu);
 

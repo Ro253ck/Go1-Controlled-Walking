@@ -22,7 +22,7 @@ void *th_logger_run(void *arg)
     while (atomic_load(c->running)) {
         rt_periodic_wait(&c->per);
 
-        /* Leggo le blackboard di interesse */
+        /* I read the blackboards of interest */
         bb_state_read(c->bb_state, &st);
         bb_att_read(c->bb_att, &att);
 

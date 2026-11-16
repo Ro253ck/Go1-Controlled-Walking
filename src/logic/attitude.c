@@ -4,7 +4,7 @@
 #include <math.h>
 
 
-/* Prodotto di Hamilton: compone due rotazioni. Otteniamo un'altro quaternione. */
+/* Hamilton product: composes two rotations. We obtain another quaternion. */
 void quaternion_mul(double r[4], const double a[4], const double b[4])
 {
     const double w = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
@@ -16,7 +16,7 @@ void quaternion_mul(double r[4], const double a[4], const double b[4])
     r[0] = w; r[1] = x; r[2] = y; r[3] = z;
 }
 
-/*Il coniugato di un quaternione è semplicemente lo stesso quaternione con le componeneti "vettoriali" con segno opposto*/
+/*The conjugate of a quaternion is simply the same quaternion with the "vector" components sign-flipped*/
 void quaternion_conj(double r[4], const double q[4])
 {
     r[0] =  q[0];
@@ -25,17 +25,17 @@ void quaternion_conj(double r[4], const double q[4])
     r[3] = -q[3];
 }
 
-/*Normalizza il quaternione*/
+/*Normalises the quaternion*/
 void quaternion_normalize(double q[4])
 {
-    double n = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]); /*Calcolo della norma*/
+    double n = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]); /*Computation of the norm*/
     if (n < 1e-12) { q[0] = 1.0; q[1] = q[2] = q[3] = 0.0; return; } 
     for (int i = 0; i < 4; i++){
         q[i] /= n;
     }
 }
 
-/*Effettua rotazione del vettore. Da sistema corpo a sistema mondo*/
+/*Rotates the vector. From body frame to world frame*/
 void quaternion_rotate(double out[3], const double q[4], const double v[3])
 {
     const double v_q[4]={0,v[0],v[1],v[2]};
@@ -51,7 +51,7 @@ void quaternion_rotate(double out[3], const double q[4], const double v[3])
     out[2]=tmp[3];
 }
 
-/*Effettua rotazione inversa. Da sistema mondo a sistema corpo*/
+/*Performs the inverse rotation. From world frame to body frame*/
 void quaternion_rotate_inv(double out[3], const double q[4], const double v[3])
 {
     double qc[4];
@@ -59,16 +59,16 @@ void quaternion_rotate_inv(double out[3], const double q[4], const double v[3])
     quaternion_rotate(out, qc, v);
 }
 
-/*Ritorna i valori di roll, pitch e yaw*/
+/*Returns the roll, pitch and yaw values*/
 void quaternion_to_rpy(const double q[4], double *roll, double *pitch, double *yaw)
 {
     const double w = q[0], x = q[1], y = q[2], z = q[3];
 
-    double sin_pitch = 2.0 * (w*y - z*x); /*Formula ricavata dalle matrici di rotazione*/
+    double sin_pitch = 2.0 * (w*y - z*x); /*Formula derived from the rotation matrices*/
     if (sin_pitch >  1.0) sin_pitch =  1.0;
     if (sin_pitch < -1.0) sin_pitch = -1.0;
 
-    /*Formule ricavate dalle matrici di rotazione*/
+    /*Formulas derived from the rotation matrices*/
     if(roll) *roll  = atan2(2.0*(w*x + y*z), 1.0 - 2.0*(x*x + y*y));
     if(pitch) *pitch = asin(sin_pitch);
     if(yaw) *yaw   = atan2(2.0*(w*z + x*y), 1.0 - 2.0*(y*y + z*z));
@@ -76,7 +76,7 @@ void quaternion_to_rpy(const double q[4], double *roll, double *pitch, double *y
 
 void filter_init(filter_t *f, double kp, double gate)
 {
-    f->q[0] = 1.0; f->q[1] = f->q[2] = f->q[3] = 0.0; /*Nessuna rotazione*/
+    f->q[0] = 1.0; f->q[1] = f->q[2] = f->q[3] = 0.0; /*No rotation*/
     f->kp        = kp;
     f->gate      = gate;
     f->seeded    = 0;
@@ -86,13 +86,13 @@ void filter_init(filter_t *f, double kp, double gate)
 
 void filter_seed(filter_t *f, const double accelerometer[3])
 {
-    /*accelerometer ci ritorna dove dove punta la forza in coordinate corpo*/
+    /*accelerometer gives us where the force points, in body coordinates*/
     const double n = sqrt(accelerometer[0]*accelerometer[0] + accelerometer[1]*accelerometer[1] + accelerometer[2]*accelerometer[2]);
 
-    /*Controllo se sono fermo e che non sono in caduta libera*/
+    /*Check that I am still and that I am not in free fall*/
     if (n < 1e-6 || fabs(n - ATT_GRAVITY) > f->gate) return; 
     
-    const double ax = accelerometer[0]/n, ay = accelerometer[1]/n, az = accelerometer[2]/n; /*Versore*/
+    const double ax = accelerometer[0]/n, ay = accelerometer[1]/n, az = accelerometer[2]/n; /*Unit vector*/
     const double s = sqrt(ax*ax + ay*ay);
 
     const double cx = ay, cy = -ax, cz = 0.0;     /* (ax,ay,az) x (0,0,1) */
@@ -121,16 +121,16 @@ void filter_update(filter_t *f, const double gyro[3],const double accelerometer[
     double w[3] = { gyro[0], gyro[1], gyro[2] };
     const double a_norm = sqrt(accelerometer[0]*accelerometer[0] + accelerometer[1]*accelerometer[1] + accelerometer[2]*accelerometer[2]);
 
-    /*Controllo di nuovo se sono fermo o in caduta libera. Questa volta in caso affermativo integro solo il giroscopio senza correzzione dell'accelerometro*/
+    /*Check again whether I am still or in free fall. This time, if so, I integrate the gyroscope only, with no accelerometer correction*/
     if (fabs(a_norm - ATT_GRAVITY) <= f->gate && a_norm > 1e-6) {
         double up_meas[3] = { accelerometer[0]/a_norm, accelerometer[1]/a_norm, accelerometer[2]/a_norm };
         double up_pred[3];
         const double ez[3] = { 0.0, 0.0, 1.0 };
 
         
-        quaternion_rotate_inv(up_pred, f->q, ez); /*Porto "l'alto" del mondo in coordinate corpo secondo la rotazione attuale */
+        quaternion_rotate_inv(up_pred, f->q, ez); /*I bring the world "up" into body coordinates according to the current rotation */
 
-        /*Vado ad aggiungere una correzione proprozianle alla differenza tra la misura dell'accelerometro e la predizione*/
+        /*I add a correction proportional to the difference between the accelerometer measurement and the prediction*/
         w[0] += f->kp * (up_meas[1]*up_pred[2] - up_meas[2]*up_pred[1]);
         w[1] += f->kp * (up_meas[2]*up_pred[0] - up_meas[0]*up_pred[2]);
         w[2] += f->kp * (up_meas[0]*up_pred[1] - up_meas[1]*up_pred[0]);
@@ -139,10 +139,10 @@ void filter_update(filter_t *f, const double gyro[3],const double accelerometer[
     }
 
     {
-        const double w_norm = sqrt(w[0]*w[0] + w[1]*w[1] + w[2]*w[2]); /*Quanto velocemente sto ruotando*/
+        const double w_norm = sqrt(w[0]*w[0] + w[1]*w[1] + w[2]*w[2]); /*How fast I am rotating*/
         double dq[4], qn[4];    
 
-        /*Integrazione del giroscopio aggiornato*/
+        /*Integration of the updated gyroscope*/
         if (w_norm * dt > 1e-9) {
             const double half = 0.5 * w_norm * dt;
             const double k    = sin(half) / w_norm;

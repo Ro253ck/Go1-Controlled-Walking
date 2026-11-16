@@ -3,16 +3,16 @@
 #include <stdio.h>
 #include <string.h>
 
-/*Funzioni Callback*/
+/*Callback functions*/
 static void cb_mouse_button(GLFWwindow *w, int button, int act, int mods)
 {
-    (void)button; (void)act; (void)mods; /*Ignoriamo i paramatri passati perchè vogliamo capire lo stato di tutti non solo di quello cambiato*/
+    (void)button; (void)act; (void)mods; /*We ignore the parameters passed in because we want the state of all of them, not just the one that changed*/
     render_t *r = (render_t *)glfwGetWindowUserPointer(w);
 
     r->btn_left   = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT)   == GLFW_PRESS;
     r->btn_middle = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     r->btn_right  = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT)  == GLFW_PRESS;
-    glfwGetCursorPos(w, &r->lastx, &r->lasty); /*Memorizza la nuova posizione del cursore*/
+    glfwGetCursorPos(w, &r->lastx, &r->lasty); /*Stores the new cursor position*/
 }
 
 static void cb_mouse_move(GLFWwindow *w, double xpos, double ypos)
@@ -21,22 +21,22 @@ static void cb_mouse_move(GLFWwindow *w, double xpos, double ypos)
     int width, height;
     mjtMouse action;
 
-    /*Se non viene premuto nessun pulsante manteniamo la poszione corrente ma la poszione in quanto
-    * potrebbe essere cambiata*/
+    /*If no button is pressed we keep the current position, but we still update it
+    * since it may have changed*/
     if (!r->btn_left && !r->btn_middle && !r->btn_right) {
         r->lastx = xpos;
         r->lasty = ypos;
         return;
     }
 
-    glfwGetWindowSize(w, &width, &height); /*Prendiamo dimensione della finestra*/
+    glfwGetWindowSize(w, &width, &height); /*We take the size of the window*/
 
-    /*Capiamo in base ai bottoni premuti l'azione da eseguire*/
+    /*From the buttons pressed we work out the action to perform*/
     if (r->btn_right)     action = mjMOUSE_MOVE_V;
     else if (r->btn_left) action = mjMOUSE_ROTATE_V;
     else                  action = mjMOUSE_ZOOM;
 
-    /*applichiamo lo spostamento calcolando i due delta necessari*/
+    /*we apply the displacement by computing the two required deltas*/
     mjv_moveCamera(r->m, action,
                    (xpos - r->lastx) / height,
                    (ypos - r->lasty) / height,
@@ -80,7 +80,7 @@ int render_init(render_t *r, const mjModel *m)
     }
 
     glfwMakeContextCurrent(r->win);
-    glfwSwapInterval(1);   /* il vsync scandisce il ritmo; il disegno non ha scadenze */
+    glfwSwapInterval(1);   /* vsync sets the pace; drawing has no deadlines */
 
     mjv_defaultCamera(&r->cam);
     mjv_defaultOption(&r->opt);
@@ -90,14 +90,14 @@ int render_init(render_t *r, const mjModel *m)
     mjv_makeScene(m, &r->scn, 2000);
     mjr_makeContext(m, &r->con, mjFONTSCALE_150);
 
-    /* Segue il tronco cosi' il robot resta inquadrato quando inizia a muoversi. */
+    /* Tracks the trunk so the robot stays framed once it starts moving. */
     r->cam.type        = mjCAMERA_TRACKING;
     r->cam.trackbodyid = mj_name2id(m, mjOBJ_BODY, "trunk");
     r->cam.distance    = 2.0;
     r->cam.elevation   = -20.0;
     r->cam.azimuth     = 120.0;
 
-    r->d = mj_makeData(m); /*Copia privata di data*/
+    r->d = mj_makeData(m); /*Private copy of data*/
 
     glfwSetWindowUserPointer(r->win, r);
     glfwSetMouseButtonCallback(r->win, cb_mouse_button);
@@ -122,7 +122,7 @@ int render_should_close(render_t *r)
     return r->win ? glfwWindowShouldClose(r->win) : 1;
 }
 
-/* Traduce la maschera di bit del watchdog in qualcosa di leggibile a schermo. */
+/* Turns the watchdog bit mask into something readable on screen. */
 static void alarms_text(uint32_t alarms, char *out, size_t n)
 {
     const int tilt = (alarms & WD_TILT)      != 0;
@@ -147,13 +147,13 @@ void render_frame(render_t *r, const robot_state_t *st, const cmd_t *cmd,
 {
     mjrRect viewport = {0, 0, 0, 0};
 
-    /* Carica la posa pubblicata nei dati privati e ne ricava la geometria
-       necessaria a disegnarla. Niente di quanto accade qui puo' toccare
-       l'anello di controllo. */
+    /* Loads the published pose into the private data and derives from it the
+       geometry needed to draw it. Nothing that happens here can touch
+       the control loop. */
     for (int i = 0; i < CFG_NQ; i++)
         r->d->qpos[i] = st->qpos[i];
     r->d->time = st->sim_time;
-    mj_forward(r->m, r->d); /*Effettua cinematica diretta della posizione appena prelevata*/
+    mj_forward(r->m, r->d); /*Runs forward kinematics on the pose just fetched*/
 
     glfwGetFramebufferSize(r->win, &viewport.width, &viewport.height);
     mjv_updateScene(r->m, r->d, &r->opt, NULL, &r->cam, mjCAT_ALL, &r->scn);
@@ -179,9 +179,9 @@ void render_frame(render_t *r, const robot_state_t *st, const cmd_t *cmd,
              rt_factor);
     mjr_overlay(mjFONT_NORMAL, mjGRID_TOPLEFT, viewport, r->hud, NULL, &r->con);
 
-    /* Una scritta abbastanza grande da notarsi mentre si guarda il robot e
-       non il testo: tutto il senso del watchdog e' che agisce proprio quando
-       non stai leggendo i numeri. */
+    /* A caption large enough to be noticed while you are watching the robot and
+       not the text: the whole point of the watchdog is that it acts precisely when
+       you are not reading the numbers. */
     if (safe->mode != SAFE_OK) {
         char line[128];
         snprintf(line, sizeof(line), "WATCHDOG  %s   %s",

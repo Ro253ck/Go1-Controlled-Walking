@@ -8,27 +8,27 @@
 
 typedef struct {
     pthread_mutex_t mtx;
-    rt_acc_t        wait;   /* tempo di acquisizione, caso peggiore su tutti i chiamanti */
+    rt_acc_t        wait;   /* acquisition time, worst case over all callers */
     robot_state_t   data;
 } bb_state_t;
 
 void bb_state_init(bb_state_t *bb);
 void bb_state_destroy(bb_state_t *bb);
 
-/* Scritta solo da th_sim. Assegna il numero di sequenza da se', cosi' il
-   chiamante non deve ricordarsi di incrementarlo. */
+/* Written only by th_sim. It assigns the sequence number itself, so the
+   caller does not have to remember to increment it. */
 void bb_state_write(bb_state_t *bb, const robot_state_t *in);
 
-/* Lettura bloccante, per i thread che hanno bisogno del dato per lavorare. */
+/* Blocking read, for the threads that need the data in order to work. */
 void bb_state_read(bb_state_t *bb, robot_state_t *out);
 
-/* Lettura non bloccante per i consumatori best-effort come il renderer: con
-   la semantica "vince l'ultimo", saltare un ciclo occupato non costa niente e
-   garantisce che il chiamante non attenda mai. Ritorna 1 se riesce, 0 se la
-   lavagna era occupata. */
+/* Non-blocking read for best-effort consumers such as the renderer: with
+   "last one wins" semantics, skipping a busy cycle costs nothing and
+   guarantees the caller never waits. Returns 1 on success, 0 if the
+   blackboard was busy. */
 int bb_state_tryread(bb_state_t *bb, robot_state_t *out);
 
-/* comando dell'operatore: scritto da th_command, letto da th_gait */
+/* operator command: written by th_command, read by th_gait */
 typedef struct {
     pthread_mutex_t mtx;
     rt_acc_t        wait;
@@ -40,7 +40,7 @@ void bb_cmd_destroy(bb_cmd_t *bb);
 void bb_cmd_write(bb_cmd_t *bb, const cmd_t *in);
 void bb_cmd_read(bb_cmd_t *bb, cmd_t *out);
 
-/*  riferimenti dei giunti: scritti da th_gait, letti da th_sim  */
+/*  joint references: written by th_gait, read by th_sim  */
 typedef struct {
     pthread_mutex_t mtx;
     rt_acc_t        wait;
@@ -52,7 +52,7 @@ void bb_des_destroy(bb_des_t *bb);
 void bb_des_write(bb_des_t *bb, const joint_cmd_t *in);
 void bb_des_read(bb_des_t *bb, joint_cmd_t *out);
 
-/*misure inerziali: scritte da th_sim  */
+/*inertial measurements: written by th_sim  */
 typedef struct {
     pthread_mutex_t mtx;
     rt_acc_t        wait;
@@ -64,7 +64,7 @@ void bb_imu_destroy(bb_imu_t *bb);
 void bb_imu_write(bb_imu_t *bb, const imu_t *in);
 void bb_imu_read(bb_imu_t *bb, imu_t *out);
 
-/*  assetto stimato: scritto da th_estimator */
+/*  estimated attitude: written by th_estimator */
 
 typedef struct {
     pthread_mutex_t mtx;
@@ -77,7 +77,7 @@ void bb_att_destroy(bb_att_t *bb);
 void bb_att_write(bb_att_t *bb, const att_t *in);
 void bb_att_read(bb_att_t *bb, att_t *out);
 
-/* stato di sicurezza: scritto da th_watchdog  */
+/* safety state: written by th_watchdog  */
 typedef struct {
     pthread_mutex_t mtx;
     rt_acc_t        wait;

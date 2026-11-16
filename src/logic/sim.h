@@ -8,58 +8,58 @@
 #include <stdint.h>
 
 typedef struct {
-    /*Definiamo le strutture principali per interagire con mujoco*/
+    /*We define the main structures used to interact with MuJoCo*/
     mjModel *m;
     mjData  *d;
 
-    /* L'attuatore i muove il giunto qadr[i]/vadr[i]. Risolti dal modello
-       all'inizializzazione, cosi' la convenzione di indice del C coincide per
-       costruzione con l'ordine degli attuatori e non dipende mai dalla
-       disposizione di qpos. */
+    /* Actuator i drives the joint at qadr[i]/vadr[i]. Resolved from the model
+       at initialisation, so the C index convention coincides by
+       construction with the actuator order and never depends on the
+       layout of qpos. */
     int qadr[CFG_NUM_JOINTS];
     int vadr[CFG_NUM_JOINTS];
 
-    /* Legge PD, per giunto */
+    /* PD law, per joint */
     double kp[CFG_NUM_JOINTS];
     double kd[CFG_NUM_JOINTS];
     double q_des[CFG_NUM_JOINTS];
     double qd_des[CFG_NUM_JOINTS];
 
-    /* Posizione dei sensori dentro d->sensordata, -1 se il sensore manca */
+    /* Position of the sensors inside d->sensordata, -1 if the sensor is missing */
     int adr_gyro;
     int adr_acc;
 
-    /* Scalato dallo stato di sicurezza: 1 normale,  0 per fermare. */
+    /* Scaled by the safety state: 1 normal, 0 to stop. */
     double gain_scale;
 
-    /* Spinta esterna, applicata per un numero limitato di cicli e poi azzerata. */
+    /* External shove, applied for a limited number of cycles and then cleared. */
     int    trunk_body;
     int    push_left;
     double push_f[3];
 
-    /* Diagnostica */
-    uint64_t n_nonfinite;   /* coppie sostituite con zero */
+    /* Diagnostics */
+    uint64_t n_nonfinite;   /* torques replaced with zero */
 } sim_t;
 
 int  sim_init(sim_t *s, const char *model_path, char *err, int err_sz);
 void sim_free(sim_t *s);
 
-/* Carica il keyframe per nome e lo rende il bersaglio del PD. Ritorna 0 se riesce. */
+/* Loads the keyframe by name and makes it the PD target. Returns 0 on success. */
 int  sim_reset_to_key(sim_t *s, const char *key_name);
 
 void sim_set_gains(sim_t *s, double kp, double kd);
 
-/* Un ciclo di controllo: PD dallo stato attuale verso q_des, poi avanza la fisica. */
+/* One control cycle: PD from the current state towards q_des, then advance the physics. */
 void sim_step(sim_t *s);
 
-/* Programma una forza esterna sul tronco per CFG_PUSH_CYCLES cicli. */
+/* Schedules an external force on the trunk for CFG_PUSH_CYCLES cycles. */
 void sim_push(sim_t *s, double fx, double fy, double fz);
 
-/* Compone la vista pubblicabile dello stato. Chiamata fuori da ogni sezione
-   critica: la scrittura sulla lavagna diventa cosi' una semplice copia. */
+/* Composes the publishable view of the state. Called outside every critical
+   section: the write to the blackboard then becomes a plain copy. */
 void sim_snapshot(const sim_t *s, robot_state_t *out);
 
-/* IMU grezza come la riportano i sensori, senza nessun filtraggio. */
+/* Raw IMU exactly as the sensors report it, with no filtering. */
 void sim_imu_snapshot(const sim_t *s, imu_t *out);
 
 #endif 
