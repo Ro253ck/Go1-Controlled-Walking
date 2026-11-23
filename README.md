@@ -8,8 +8,6 @@ architecture**: six independent periodic tasks, with distinct periods and
 priorities, communicating exclusively through single-writer *blackboards*
 protected by mutexes with priority inheritance.
 
-![Open-loop trot](docs/trot.gif)
-
 The control law itself is deliberately simple — an open-loop trot with a
 Raibert footstep correction and a joint-space PD. Everything that is
 interesting here happens around it: how the tasks are released, how they
@@ -75,8 +73,6 @@ c->sim->gain_scale = (safe.mode == SAFE_STOP) ? 0.0 : 1.0;
 ```
 
 ## What the controller does
-
-![Side view of the trot](docs/trot_side.png)
 
 **Gait.** A trot: the diagonal pairs move together, `T_g = 0.40 s` with a
 duty of 0.55, so there is a short interval with all four feet down. During
@@ -302,7 +298,6 @@ Go1-Controlled-Walking
 │   ├── scene_slope.xml         pitched ground
 │   └── assets/                 meshes, not committed
 │
-├── docs                        the images in this README
 ├── Makefile
 └── logs
 ```
